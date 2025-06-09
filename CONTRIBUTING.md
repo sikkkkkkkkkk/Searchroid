@@ -1,6 +1,6 @@
-# Contributing to NanoBrowser
+# Contributing to Searchroid
 
-We deeply appreciate your interest in contributing to NanoBrowser! Every contribution helps make Nanobrowser more powerful and accessible for everyone.
+We deeply appreciate your interest in contributing to Searchroid! Every contribution helps make Searchroid more powerful and accessible for everyone.
 
 ## Quick Start
 

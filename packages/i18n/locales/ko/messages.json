@@ -1,21 +1,21 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Automate web tasks with AI! Searchroid is an open-source Chrome extension that lets you extract data, fill forms, and more."
+    "message": "AI로 웹 작업을 자동화하세요! Searchroid는 데이터 추출과 양식 작성을 도와주는 오픈 소스 Chrome 확장 프로그램입니다."
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Searchroid: AI Web Agent & Automation"
+    "message": "Searchroid: AI 웹 에이전트 & 자동화"
   },
   "toggleTheme": {
-    "message": "Toggle theme"
+    "message": "테마 전환"
   },
   "loading": {
-    "message": "Loading..."
+    "message": "로딩 중..."
   },
   "greeting": {
     "description": "Greeting message",
-    "message": "Hello, My name is $NAME$",
+    "message": "안녕하세요, 제 이름은 $NAME$입니다.",
     "placeholders": {
       "name": {
         "content": "$1",
@@ -25,6 +25,6 @@
   },
   "hello": {
     "description": "Placeholder example",
-    "message": "Hello $1"
+    "message": "안녕 $1"
   }
 }
