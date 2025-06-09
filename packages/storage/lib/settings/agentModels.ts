@@ -11,6 +11,7 @@ export interface ModelConfig {
   modelName: string;
   parameters?: Record<string, unknown>;
   reasoningEffort?: 'low' | 'medium' | 'high'; // For o-series models (OpenAI and Azure)
+  contextWindowSize?: number; // Context window size for models like Ollama
 }
 
 // Interface for storing multiple agent model configurations

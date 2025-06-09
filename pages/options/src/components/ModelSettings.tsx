@@ -54,6 +54,11 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     [AgentNameEnum.Planner]: undefined,
     [AgentNameEnum.Validator]: undefined,
   });
+  const [contextWindowSize, setContextWindowSize] = useState<Record<AgentNameEnum, number>>({
+    [AgentNameEnum.Navigator]: 64000,
+    [AgentNameEnum.Planner]: 64000,
+    [AgentNameEnum.Validator]: 64000,
+  });
   const [newModelInputs, setNewModelInputs] = useState<Record<string, string>>({});
   const [isProviderSelectorOpen, setIsProviderSelectorOpen] = useState(false);
   const newlyAddedProviderRef = useRef<string | null>(null);
@@ -118,6 +123,12 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
               setReasoningEffort(prev => ({
                 ...prev,
                 [agent]: config.reasoningEffort as 'low' | 'medium' | 'high',
+              }));
+            }
+            if (config.contextWindowSize) {
+              setContextWindowSize(prev => ({
+                ...prev,
+                [agent]: config.contextWindowSize as number,
               }));
             }
           }
@@ -561,6 +572,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
           modelName: model,
           parameters: newParameters,
           reasoningEffort: isOpenAIOModel(model) ? reasoningEffort[agentName] || 'medium' : undefined,
+          contextWindowSize: contextWindowSize[agentName],
         });
       } else {
         // Reset storage if no model is selected
@@ -589,6 +601,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
             modelName: selectedModels[agentName],
             parameters: modelParameters[agentName],
             reasoningEffort: value,
+            contextWindowSize: contextWindowSize[agentName],
           });
         }
       } catch (error) {
@@ -639,10 +652,40 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
             provider,
             modelName: selectedModels[agentName],
             parameters: newParameters,
+            reasoningEffort: isOpenAIOModel(selectedModels[agentName])
+              ? reasoningEffort[agentName] || 'medium'
+              : undefined,
+            contextWindowSize: contextWindowSize[agentName],
           });
         }
       } catch (error) {
         console.error('Error saving agent parameters:', error);
+      }
+    }
+  };
+
+  const handleContextWindowChange = async (agentName: AgentNameEnum, value: number) => {
+    setContextWindowSize(prev => ({
+      ...prev,
+      [agentName]: value,
+    }));
+
+    if (selectedModels[agentName]) {
+      try {
+        const provider = getProviderForModel(selectedModels[agentName]);
+        if (provider) {
+          await agentModelStore.setAgentModel(agentName, {
+            provider,
+            modelName: selectedModels[agentName],
+            parameters: modelParameters[agentName],
+            reasoningEffort: isOpenAIOModel(selectedModels[agentName])
+              ? reasoningEffort[agentName] || 'medium'
+              : undefined,
+            contextWindowSize: value,
+          });
+        }
+      } catch (error) {
+        console.error('Error saving context window size:', error);
       }
     }
   };
@@ -795,6 +838,33 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
             </div>
           </div>
         )}
+        {selectedModels[agentName] &&
+          providers[getProviderForModel(selectedModels[agentName])]?.type === ProviderTypeEnum.Ollama && (
+            <div className="flex items-center">
+              <label
+                htmlFor={`${agentName}-context-window`}
+                className={`w-24 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+              >
+                Context
+              </label>
+              <div className="flex flex-1 items-center space-x-2">
+                <input
+                  id={`${agentName}-context-window`}
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={contextWindowSize[agentName]}
+                  onChange={e =>
+                    handleContextWindowChange(
+                      agentName,
+                      Number.parseInt(e.target.value, 10),
+                    )
+                  }
+                  className={`flex-1 rounded-md border text-sm ${isDarkMode ? 'border-slate-600 bg-slate-700 text-gray-200' : 'border-gray-300 bg-white text-gray-700'} px-3 py-2`}
+                />
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );
