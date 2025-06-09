@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { RxDiscordLogo } from 'react-icons/rx';
-import { FiSettings } from 'react-icons/fi';
+import { FiSettings, FiShare } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
 import { type Message, Actors, chatHistoryStore, taskHistoryStore, type TaskHistoryItem } from '@extension/storage';
@@ -12,6 +12,7 @@ import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
 import TaskHistoryList from './components/TaskHistoryList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
+import { exportResult, type ExportFormat, type ExportPlatform } from './export';
 import './SidePanel.css';
 
 const SidePanel = () => {
@@ -612,6 +613,23 @@ const SidePanel = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const platform = (window.prompt('Export platform (sheets|notion|slack)?', 'sheets') || 'sheets') as ExportPlatform;
+      const format = (window.prompt('Format (text|json|markdown)?', 'text') || 'text') as ExportFormat;
+      const content =
+        format === 'json'
+          ? JSON.stringify(messages, null, 2)
+          : format === 'markdown'
+            ? messages.map(m => `- ${m.actor}: ${m.content}`).join('\n')
+            : messages.map(m => `${m.actor}: ${m.content}`).join('\n');
+      await exportResult(platform, format, content);
+      console.log('Export success');
+    } catch (err) {
+      console.error('Export failed', err);
+    }
+  };
+
   // Load favorite prompts from storage
   useEffect(() => {
     const loadFavorites = async () => {
@@ -698,9 +716,18 @@ const SidePanel = () => {
               href="https://discord.gg/NN3ABHggMK"
               target="_blank"
               rel="noopener noreferrer"
-              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
+              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}> 
               <RxDiscordLogo size={20} />
             </a>
+            <button
+              type="button"
+              onClick={handleExport}
+              onKeyDown={e => e.key === 'Enter' && handleExport()}
+              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+              aria-label="Export"
+              tabIndex={0}>
+              <FiShare size={20} />
+            </button>
             <button
               type="button"
               onClick={() => chrome.runtime.openOptionsPage()}
