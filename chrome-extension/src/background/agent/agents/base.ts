@@ -83,6 +83,12 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
     if (lib) {
       return lib;
     }
+    // some models attach the library info on the constructor
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctorLib = (this.chatLLM.constructor as any).library as string | undefined;
+    if (ctorLib) {
+      return ctorLib;
+    }
     const envLib = import.meta.env.VITE_LLM_LIBRARY as string | undefined;
     if (envLib) {
       return envLib;

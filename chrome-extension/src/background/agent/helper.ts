@@ -1,13 +1,21 @@
 import { type ProviderConfig, type ModelConfig, ProviderTypeEnum } from '@extension/storage';
 import { ChatOpenAI, AzureChatOpenAI } from '@langchain/openai';
+import openaiPkg from '@langchain/openai/package.json' assert { type: 'json' };
 import { ChatAnthropic } from '@langchain/anthropic';
+import anthropicPkg from '@langchain/anthropic/package.json' assert { type: 'json' };
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import googleGenaiPkg from '@langchain/google-genai/package.json' assert { type: 'json' };
 import { ChatXAI } from '@langchain/xai';
+import xaiPkg from '@langchain/xai/package.json' assert { type: 'json' };
 import { ChatGroq } from '@langchain/groq';
+import groqPkg from '@langchain/groq/package.json' assert { type: 'json' };
 import { ChatCerebras } from '@langchain/cerebras';
+import cerebrasPkg from '@langchain/cerebras/package.json' assert { type: 'json' };
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOllama } from '@langchain/ollama';
+import ollamaPkg from '@langchain/ollama/package.json' assert { type: 'json' };
 import { ChatDeepSeek } from '@langchain/deepseek';
+import deepseekPkg from '@langchain/deepseek/package.json' assert { type: 'json' };
 
 const maxTokens = 1024 * 4;
 
@@ -16,6 +24,9 @@ const maxTokens = 1024 * 4;
 function attachLibrary<T extends BaseChatModel>(model: T, library: string): T {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (model as any).library = library;
+  // also attach to constructor so it can be retrieved after bundling
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (model.constructor as any).library = library;
   return model;
 }
 
@@ -78,7 +89,7 @@ function createOpenAIChatModel(
     args.temperature = (modelConfig.parameters?.temperature ?? 0.1) as number;
     args.maxTokens = maxTokens;
   }
-  return attachLibrary(new ChatOpenAI(args), '@langchain/openai');
+  return attachLibrary(new ChatOpenAI(args), openaiPkg.name);
 }
 
 // Function to extract instance name from Azure endpoint URL
@@ -167,7 +178,7 @@ function createAzureChatModel(providerConfig: ProviderConfig, modelConfig: Model
     // DO NOT pass baseUrl or configuration here
   };
   // console.log('[createChatModel] Azure args passed to AzureChatOpenAI:', args);
-  return attachLibrary(new AzureChatOpenAI(args), '@langchain/openai');
+  return attachLibrary(new AzureChatOpenAI(args), openaiPkg.name);
 }
 
 // create a chat model based on the agent name, the model name and provider
@@ -197,7 +208,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         topP,
         clientOptions: {},
       };
-      return attachLibrary(new ChatAnthropic(args), '@langchain/anthropic');
+      return attachLibrary(new ChatAnthropic(args), anthropicPkg.name);
     }
     case ProviderTypeEnum.DeepSeek: {
       const args = {
@@ -206,7 +217,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         temperature,
         topP,
       };
-      return attachLibrary(new ChatDeepSeek(args) as BaseChatModel, '@langchain/deepseek');
+      return attachLibrary(new ChatDeepSeek(args) as BaseChatModel, deepseekPkg.name);
     }
     case ProviderTypeEnum.Gemini: {
       const args = {
@@ -215,7 +226,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         temperature,
         topP,
       };
-      return attachLibrary(new ChatGoogleGenerativeAI(args), '@langchain/google-genai');
+      return attachLibrary(new ChatGoogleGenerativeAI(args), googleGenaiPkg.name);
     }
     case ProviderTypeEnum.Grok: {
       const args = {
@@ -226,7 +237,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         maxTokens,
         configuration: {},
       };
-      return attachLibrary(new ChatXAI(args) as BaseChatModel, '@langchain/xai');
+      return attachLibrary(new ChatXAI(args) as BaseChatModel, xaiPkg.name);
     }
     case ProviderTypeEnum.Groq: {
       const args = {
@@ -236,7 +247,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         topP,
         maxTokens,
       };
-      return attachLibrary(new ChatGroq(args), '@langchain/groq');
+      return attachLibrary(new ChatGroq(args), groqPkg.name);
     }
     case ProviderTypeEnum.Cerebras: {
       const args = {
@@ -246,7 +257,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         topP,
         maxTokens,
       };
-      return attachLibrary(new ChatCerebras(args), '@langchain/cerebras');
+      return attachLibrary(new ChatCerebras(args), cerebrasPkg.name);
     }
     case ProviderTypeEnum.Ollama: {
       const args: {
@@ -269,7 +280,7 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         // use the context window size from model configuration, defaulting to 64000
         numCtx: modelConfig.contextWindowSize ?? 64000,
       };
-      return attachLibrary(new ChatOllama(args), '@langchain/ollama');
+      return attachLibrary(new ChatOllama(args), ollamaPkg.name);
     }
     case ProviderTypeEnum.OpenRouter: {
       // Call the helper function, passing OpenRouter headers via the third argument
