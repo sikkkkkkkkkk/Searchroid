@@ -1,0 +1,7 @@
+{
+  "googleSheetsApiKey": "",
+  "googleSheetsSpreadsheetId": "",
+  "notionApiKey": "",
+  "notionDatabaseId": "",
+  "slackWebhookUrl": ""
+}
