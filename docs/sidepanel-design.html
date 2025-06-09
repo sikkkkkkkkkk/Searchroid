@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Searchroid Side Panel UI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="sidepanel-design.css" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <header class="sidebar-header">
+        <img src="../chrome-extension/public/icons/icon-128.png" alt="Searchroid Logo" class="logo" />
+      </header>
+      <main class="sidebar-main">
+        <button class="start-btn">탐색 시작</button>
+        <div class="message-area">
+          <div class="message-bubble left">안녕하세요! 어떤 걸 도와드릴까요?</div>
+        </div>
+        <div class="card-list">
+          <div class="card">헤드라인 요약</div>
+          <div class="card">가격 비교</div>
+          <div class="card">리뷰 분석</div>
+          <div class="card">이미지 검색</div>
+        </div>
+      </main>
+      <footer class="input-area">
+        <input type="text" class="message-input" placeholder="메시지를 입력하세요" />
+        <button class="send-btn">전송</button>
+      </footer>
+    </div>
+  </body>
+</html>
