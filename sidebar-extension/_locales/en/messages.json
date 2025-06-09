@@ -1,0 +1,5 @@
+{
+  "extName": {"message": "Sample Sidebar Extension"},
+  "extDescription": {"message": "Example extension with sidebar"},
+  "openSidebar": {"message": "Open Sidebar"}
+}

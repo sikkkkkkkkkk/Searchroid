@@ -1,0 +1,5 @@
+{
+  "extName": {"message": "샘플 사이드바 확장"},
+  "extDescription": {"message": "사이드바가 있는 예제 확장"},
+  "openSidebar": {"message": "사이드바 열기"}
+}
