@@ -15,6 +15,8 @@ import {
   getClickableElements as _getClickableElements,
   removeHighlights as _removeHighlights,
   getScrollInfo as _getScrollInfo,
+  getReadabilityContent as _getReadabilityContent,
+  type ReadabilityResult,
 } from '../dom/service';
 import { DOMElementNode, type DOMState } from '../dom/views';
 import { type BrowserContextConfig, DEFAULT_BROWSER_CONTEXT_CONFIG, type PageState, URLNotAllowedError } from './views';
@@ -197,6 +199,10 @@ export default class Page {
       throw new Error('Puppeteer page is not connected');
     }
     return await this._puppeteerPage.content();
+  }
+
+  async getReadabilityContent(): Promise<ReadabilityResult> {
+    return _getReadabilityContent(this._tabId);
   }
 
   async getState(useVision = false, cacheClickableElementsHashes = false): Promise<PageState> {
