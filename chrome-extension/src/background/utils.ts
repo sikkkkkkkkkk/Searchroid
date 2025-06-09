@@ -109,6 +109,7 @@ export function convertZodToJsonSchema(zodSchema: z.ZodType, name: string, addTi
     name: name,
     nameStrategy: 'title',
     target: 'openApi3',
+    $refStrategy: 'none',
     allowedAdditionalProperties: undefined,
     rejectedAdditionalProperties: undefined,
     postProcess: addTitle
@@ -121,6 +122,35 @@ export function convertZodToJsonSchema(zodSchema: z.ZodType, name: string, addTi
         }
       : undefined,
   });
+
+  function removeAdditionalProperties(obj: unknown): void {
+    if (!obj || typeof obj !== 'object') {
+      return;
+    }
+    const o = obj as Record<string, unknown>;
+    if ('additionalProperties' in o) {
+      delete o.additionalProperties;
+    }
+    if (o.properties && typeof o.properties === 'object') {
+      for (const value of Object.values(o.properties)) {
+        removeAdditionalProperties(value);
+      }
+    }
+    if (o.items) {
+      removeAdditionalProperties(o.items);
+    }
+    if (Array.isArray(o.anyOf)) {
+      o.anyOf.forEach(item => removeAdditionalProperties(item));
+    }
+    if (Array.isArray(o.oneOf)) {
+      o.oneOf.forEach(item => removeAdditionalProperties(item));
+    }
+    if (Array.isArray(o.allOf)) {
+      o.allOf.forEach(item => removeAdditionalProperties(item));
+    }
+  }
+
+  removeAdditionalProperties(jsonSchema);
 
   // logger.info('Navigator json schema', JSON.stringify(jsonSchema, null, 2));
   return jsonSchema;
