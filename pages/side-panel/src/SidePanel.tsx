@@ -4,12 +4,13 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore } from '@extension/storage';
+import { type Message, Actors, chatHistoryStore, taskHistoryStore, type TaskHistoryItem } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
+import TaskHistoryList from './components/TaskHistoryList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
@@ -24,11 +25,13 @@ const SidePanel = () => {
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [favoritePrompts, setFavoritePrompts] = useState<FavoritePrompt[]>([]);
+  const [recentTasks, setRecentTasks] = useState<TaskHistoryItem[]>([]);
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const setInputTextRef = useRef<((text: string) => void) | null>(null);
+  const currentTaskRef = useRef<string | null>(null);
 
   // Check for dark mode preference
   useEffect(() => {
@@ -89,18 +92,30 @@ const SidePanel = () => {
               setIsFollowUpMode(true);
               setInputEnabled(true);
               setShowStopButton(false);
+              if (currentTaskRef.current) {
+                taskHistoryStore.addTask(currentTaskRef.current).catch(err => console.error('Failed to save task history:', err));
+                currentTaskRef.current = null;
+              }
               break;
             case ExecutionState.TASK_FAIL:
               setIsFollowUpMode(true);
               setInputEnabled(true);
               setShowStopButton(false);
               skip = false;
+              if (currentTaskRef.current) {
+                taskHistoryStore.addTask(currentTaskRef.current).catch(err => console.error('Failed to save task history:', err));
+                currentTaskRef.current = null;
+              }
               break;
             case ExecutionState.TASK_CANCEL:
               setIsFollowUpMode(false);
               setInputEnabled(true);
               setShowStopButton(false);
               skip = false;
+              if (currentTaskRef.current) {
+                taskHistoryStore.addTask(currentTaskRef.current).catch(err => console.error('Failed to save task history:', err));
+                currentTaskRef.current = null;
+              }
               break;
             case ExecutionState.TASK_PAUSE:
               break;
@@ -378,6 +393,8 @@ const SidePanel = () => {
       setInputEnabled(false);
       setShowStopButton(true);
 
+      currentTaskRef.current = trimmedText;
+
       // Create a new chat session for this task if not in follow-up mode
       if (!isFollowUpMode) {
         const newSession = await chatHistoryStore.createSession(
@@ -609,6 +626,20 @@ const SidePanel = () => {
     loadFavorites();
   }, []);
 
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const tasks = await taskHistoryStore.getRecentTasks(5);
+        setRecentTasks(tasks);
+      } catch (error) {
+        console.error('Failed to load recent tasks:', error);
+      }
+    };
+
+    loadTasks();
+    return taskHistoryStore.subscribe(loadTasks);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -709,6 +740,7 @@ const SidePanel = () => {
                     isDarkMode={isDarkMode}
                   />
                 </div>
+                <TaskHistoryList tasks={recentTasks} onRerun={handleSendMessage} isDarkMode={isDarkMode} />
                 <div className="flex-1 overflow-y-auto">
                   <BookmarkList
                     bookmarks={favoritePrompts}
