@@ -192,11 +192,26 @@ window.buildDomTree = (
 
   const HIGHLIGHT_CONTAINER_ID = 'playwright-highlight-container';
 
+  // Store cleanup functions for all highlight overlays so they can be removed
+  // when highlighting is finished.
+  const highlightCleanups = [];
+
+  function cleanupHighlights() {
+    highlightCleanups.forEach(fn => {
+      try {
+        fn();
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    });
+    highlightCleanups.length = 0;
+  }
+
   /**
    * Highlights an element in the DOM and returns the index of the next element.
    */
   function highlightElement(element, index, parentIframe = null) {
-    if (!element) return index;
+    if (!element) return null;
 
     // Store overlays and the single label for updating
     const overlays = [];
@@ -382,9 +397,32 @@ window.buildDomTree = (
       window.addEventListener('scroll', updatePositions, true); // Use capture phase
       window.addEventListener('resize', updatePositions);
 
-      // TODO: Add cleanup logic to remove listeners and elements when done.
+      const cleanup = () => {
+        window.removeEventListener('scroll', updatePositions, true);
+        window.removeEventListener('resize', updatePositions);
 
-      return index + 1;
+        overlays.forEach(overlayData => {
+          if (overlayData.element && overlayData.element.parentNode) {
+            overlayData.element.parentNode.removeChild(overlayData.element);
+          }
+        });
+
+        if (label && label.parentNode) {
+          label.parentNode.removeChild(label);
+        }
+
+        if (
+          container &&
+          container.id === HIGHLIGHT_CONTAINER_ID &&
+          container.childElementCount === 0
+        ) {
+          container.remove();
+        }
+      };
+
+      highlightCleanups.push(cleanup);
+
+      return cleanup;
     } finally {
       // popTiming('highlighting'); // Assuming this was a typo and should be removed or corrected
     }
@@ -1321,5 +1359,7 @@ window.buildDomTree = (
     }
   }
 
-  return debugMode ? { rootId, map: DOM_HASH_MAP, perfMetrics: PERF_METRICS } : { rootId, map: DOM_HASH_MAP };
+  return debugMode
+    ? { rootId, map: DOM_HASH_MAP, perfMetrics: PERF_METRICS, cleanupHighlights }
+    : { rootId, map: DOM_HASH_MAP, cleanupHighlights };
 };
