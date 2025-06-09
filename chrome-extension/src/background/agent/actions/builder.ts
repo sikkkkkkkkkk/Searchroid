@@ -14,6 +14,7 @@ import {
   sendKeysActionSchema,
   scrollToTextActionSchema,
   cacheContentActionSchema,
+  extractContentActionSchema,
   selectDropdownOptionActionSchema,
   getDropdownOptionsActionSchema,
   closeTabActionSchema,
@@ -23,6 +24,7 @@ import { z } from 'zod';
 import { createLogger } from '@src/background/log';
 import { ExecutionState, Actors } from '../event/types';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { PromptTemplate } from '@langchain/core/prompts';
 import { wrapUntrustedContent } from '../messages/utils';
 
 const logger = createLogger('Action');
@@ -305,36 +307,43 @@ export class ActionBuilder {
     actions.push(closeTab);
 
     // Content Actions
-    // TODO: this is not used currently, need to improve on input size
-    // const extractContent = new Action(async (input: z.infer<typeof extractContentActionSchema.schema>) => {
-    //   const goal = input.goal;
-    //   const intent = input.intent || `Extracting content from page`;
-    //   this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
-    //   const page = await this.context.browserContext.getCurrentPage();
-    //   const content = await page.getReadabilityContent();
-    //   const promptTemplate = PromptTemplate.fromTemplate(
-    //     'Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Respond in json format. Extraction goal: {goal}, Page: {page}',
-    //   );
-    //   const prompt = await promptTemplate.invoke({ goal, page: content.content });
+    const extractContent = new Action(
+      async (input: z.infer<typeof extractContentActionSchema.schema>) => {
+        const goal = input.goal;
+        const intent = input.intent || `Extracting content from page`;
+        this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
+        const page = await this.context.browserContext.getCurrentPage();
+        const { textContent } = await page.getReadabilityContent();
+        const trimmed = textContent.slice(0, 4000);
+        const promptTemplate = PromptTemplate.fromTemplate(
+          'Your task is to extract the content of the page. You will be given a page and a goal and you should extract all relevant information around this goal from the page. If the goal is vague, summarize the page. Respond in json format. Extraction goal: {goal}, Page: {page}',
+        );
+        const prompt = await promptTemplate.invoke({ goal, page: trimmed });
 
-    //   try {
-    //     const output = await this.extractorLLM.invoke(prompt);
-    //     const msg = `📄  Extracted from page\n: ${output.content}\n`;
-    //     return new ActionResult({
-    //       extractedContent: msg,
-    //       includeInMemory: true,
-    //     });
-    //   } catch (error) {
-    //     logger.error(`Error extracting content: ${error instanceof Error ? error.message : String(error)}`);
-    //     const msg =
-    //       'Failed to extract content from page, you need to extract content from the current state of the page and store it in the memory. Then scroll down if you still need more information.';
-    //     return new ActionResult({
-    //       extractedContent: msg,
-    //       includeInMemory: true,
-    //     });
-    //   }
-    // }, extractContentActionSchema);
-    // actions.push(extractContent);
+        try {
+          const output = await this.extractorLLM.invoke(prompt);
+          const msg = `📄  Extracted from page\n: ${output.content}\n`;
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
+          return new ActionResult({
+            extractedContent: msg,
+            includeInMemory: true,
+          });
+        } catch (error) {
+          logger.error(
+            `Error extracting content: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          const msg =
+            'Failed to extract content from page, you need to extract content from the current state of the page and store it in the memory. Then scroll down if you still need more information.';
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, msg);
+          return new ActionResult({
+            extractedContent: msg,
+            includeInMemory: true,
+          });
+        }
+      },
+      extractContentActionSchema,
+    );
+    actions.push(extractContent);
 
     // cache content for future use
     const cacheContent = new Action(async (input: z.infer<typeof cacheContentActionSchema.schema>) => {
