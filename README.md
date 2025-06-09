@@ -119,6 +119,9 @@ OpenAI Operator의 월 $200 가격표 없이 강력한 AI 웹 에이전트를 �
    pnpm dev
    ```
 
+7. **환경 변수 설정** (선택 사항)
+   * 번들 후 LLM 라이브러리 이름이 필요하면 `.env` 파일에 `VITE_LLM_LIBRARY=@langchain/openai` 와 같이 지정하세요.
+
 ## 🤖 모델 선택 가이드
 
 Searchroid는 각 에이전트마다 다른 LLM 모델을 설정해 성능과 비용을 조절할 수 있습니다. 다음은 권장 설정입니다.
