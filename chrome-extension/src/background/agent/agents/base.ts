@@ -51,8 +51,7 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
     this.chatLLM = options.chatLLM;
     this.prompt = options.prompt;
     this.context = options.context;
-    // TODO: fix this, the name is not correct in production environment
-    this.chatModelLibrary = this.chatLLM.constructor.name;
+    this.chatModelLibrary = this.getChatModelLibrary();
     this.modelName = this.getModelName();
     this.withStructuredOutput = this.setWithStructuredOutput();
     // extra options
@@ -74,6 +73,21 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
       return this.chatLLM.model as string;
     }
     return 'Unknown';
+  }
+
+  // Determine the library that created this chat model
+  private getChatModelLibrary(): string {
+    // library property is set in helper when creating the model
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lib = (this.chatLLM as any).library as string | undefined;
+    if (lib) {
+      return lib;
+    }
+    const envLib = import.meta.env.VITE_LLM_LIBRARY as string | undefined;
+    if (envLib) {
+      return envLib;
+    }
+    return this.chatLLM.constructor.name;
   }
 
   // Set the tool calling method
