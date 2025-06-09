@@ -105,18 +105,18 @@ export class Action {
   }
 }
 
-// TODO: can not make every action optional, don't know why
 export function buildDynamicActionSchema(actions: Action[]): z.ZodType {
-  let schema = z.object({});
+  const shape: Record<string, z.ZodTypeAny> = {};
   for (const action of actions) {
     // create a schema for the action, it could be action.schema.schema or null
     // but don't use default: null as it causes issues with Google Generative AI
     const actionSchema = action.schema.schema;
-    schema = schema.extend({
-      [action.name()]: actionSchema.nullable().optional().describe(action.schema.description),
-    });
+    shape[action.name()] = actionSchema
+      .nullable()
+      .describe(action.schema.description);
   }
-  return schema;
+  // mark every action optional so the model can return only the actions it wants
+  return z.object(shape).partial();
 }
 
 export class ActionBuilder {
