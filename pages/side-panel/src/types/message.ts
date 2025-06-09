@@ -10,7 +10,7 @@ export const ACTOR_PROFILES = {
     iconBackground: '#2196F3',
   },
   planner: {
-    name: 'Planner',
+    name: '기획자',
     icon: 'icons/planner.svg',
     iconBackground: '#FF9800',
   },
